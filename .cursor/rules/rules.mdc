@@ -203,6 +203,44 @@ types/
 
 ---
 
+## 🎬 애니메이션 (Framer Motion)
+
+### 기본 원칙
+- **의미있는 애니메이션**: 사용자 이해 도움
+- **적절한 지속시간**: 0.2~0.5초 권장
+- **성능 우선**: transform, opacity 위주
+- **접근성 고려**: `prefers-reduced-motion` 지원
+
+### 필수 패턴
+```typescript
+// 페이지 전환
+const pageVariants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.4 }
+}
+
+// 호버 효과
+const hoverVariants = {
+  hover: { scale: 1.05, y: -4 },
+  tap: { scale: 0.95 }
+}
+
+// 리스트 스태거
+const listVariants = {
+  visible: {
+    transition: { staggerChildren: 0.1 }
+  }
+}
+```
+
+### 성능 & 접근성
+- **transform 활용**: translate, scale 우선
+- **모션 민감도**: `useReducedMotion()` 활용
+- **60fps 유지**: 복잡한 애니메이션 분할
+
+---
+
 ## 🧪 품질 관리
 
 ### 코드 품질 기준

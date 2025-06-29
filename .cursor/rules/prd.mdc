@@ -73,6 +73,7 @@ alwaysApply: false
 - **TailwindCSS**: 빠른 개발, 일관된 디자인
 - **shadcn/ui**: 고품질 컴포넌트
 - **TanStack Query**: 서버 상태 관리
+- **Framer Motion**: 선언적 애니메이션, 제스처 지원
 - **TypeScript**: 타입 안전성
 
 ### 데이터 구조 원칙

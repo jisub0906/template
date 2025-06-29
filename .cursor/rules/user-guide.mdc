@@ -237,6 +237,64 @@ function Layout({ children }: { children: React.ReactNode }) {
 
 ---
 
+## 🎬 애니메이션 (Framer Motion)
+
+### 기본 사용법
+```typescript
+import { motion } from 'framer-motion'
+
+// 기본 애니메이션
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.5 }}
+>
+  콘텐츠
+</motion.div>
+```
+
+### 자주 사용하는 패턴
+
+#### 페이지 전환
+```typescript
+const pageVariants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -20 }
+}
+```
+
+#### 호버 효과
+```typescript
+<motion.div
+  whileHover={{ scale: 1.05, y: -4 }}
+  whileTap={{ scale: 0.95 }}
+>
+  <Card>내용</Card>
+</motion.div>
+```
+
+#### 리스트 애니메이션
+```typescript
+const listVariants = {
+  visible: {
+    transition: { staggerChildren: 0.1 }
+  }
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 }
+}
+```
+
+### 실용 팁
+- **성능**: transform, opacity 속성 우선 사용
+- **접근성**: `useReducedMotion()` 훅으로 모션 민감도 지원
+- **지속시간**: 0.2~0.5초 권장
+
+---
+
 ## 📱 반응형 디자인
 
 ### Tailwind 반응형 클래스
