@@ -1,0 +1,433 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 📖 Next.js + Supabase 템플릿 사용 가이드
+
+## 🚀 빠른 시작
+
+### 1. 템플릿 복사
+```bash
+git clone [template-repo] my-project
+cd my-project
+pnpm install
+```
+
+### 2. Supabase 설정
+1. [supabase.com](mdc:https:/supabase.com)에서 새 프로젝트 생성
+2. 환경변수 설정:
+```bash
+# .env.local
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+### 3. 개발 서버 실행
+```bash
+pnpm dev
+```
+
+### 4. 첫 배포 (Vercel)
+```bash
+pnpm build
+vercel --prod
+```
+
+---
+
+## 🗄️ 데이터베이스 설정
+
+### 기본 테이블 생성
+Supabase SQL 에디터에서 실행:
+
+```sql
+-- 사용자 프로필
+CREATE TABLE profiles (
+  id uuid PRIMARY KEY REFERENCES auth.users(id),
+  email varchar(255) UNIQUE NOT NULL,
+  name varchar(100),
+  avatar_url text,
+  created_at timestamptz DEFAULT now()
+);
+
+-- RLS 정책
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own profile" 
+ON profiles FOR SELECT 
+USING (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile" 
+ON profiles FOR UPDATE 
+USING (auth.uid() = id);
+```
+
+### 샘플 데이터 테이블
+```sql
+-- 게시글 예시
+CREATE TABLE posts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title varchar(255) NOT NULL,
+  content text,
+  author_id uuid REFERENCES profiles(id),
+  created_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view posts" 
+ON posts FOR SELECT 
+TO authenticated 
+USING (true);
+
+CREATE POLICY "Users can create posts" 
+ON posts FOR INSERT 
+TO authenticated 
+WITH CHECK (auth.uid() = author_id);
+```
+
+---
+
+## 🔧 커스터마이징
+
+### 브랜딩 변경
+1. **로고**: `public/` 폴더에 로고 파일 추가
+2. **색상**: `globals.css`에서 CSS 변수 수정
+3. **폰트**: `layout.tsx`에서 폰트 변경
+4. **파비콘**: `app/favicon.ico` 교체
+
+### 메타데이터 수정
+```typescript
+// app/layout.tsx
+export const metadata = {
+  title: '내 앱 이름',
+  description: '내 앱 설명',
+}
+```
+
+### 환경변수 추가
+```bash
+# .env.local
+NEXT_PUBLIC_APP_NAME="My App"
+NEXT_PUBLIC_APP_URL="https://myapp.com"
+```
+
+---
+
+## 🧩 주요 컴포넌트 사용법
+
+### 인증 훅 사용
+```typescript
+import { useAuth } from '@/hooks/use-auth'
+
+function MyComponent() {
+  const { user, signIn, signOut, isLoading } = useAuth()
+  
+  if (isLoading) return <div>로딩...</div>
+  if (!user) return <button onClick={signIn}>로그인</button>
+  
+  return (
+    <div>
+      <p>안녕하세요, {user.email}님</p>
+      <button onClick={signOut}>로그아웃</button>
+    </div>
+  )
+}
+```
+
+### 데이터 페칭
+```typescript
+import { useQuery } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
+
+function PostsList() {
+  const { data: posts, isLoading } = useQuery({
+    queryKey: ['posts'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('posts')
+        .select('*')
+        .order('created_at', { ascending: false })
+      return data
+    }
+  })
+
+  if (isLoading) return <div>로딩 중...</div>
+  
+  return (
+    <div>
+      {posts?.map(post => (
+        <div key={post.id}>
+          <h3>{post.title}</h3>
+          <p>{post.content}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+### 폼 컴포넌트
+```typescript
+import { useForm } from 'react-hook-form'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+
+function PostForm() {
+  const { register, handleSubmit } = useForm()
+  
+  const onSubmit = async (data: any) => {
+    // 데이터 저장 로직
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <Input {...register('title')} placeholder="제목" />
+      <textarea {...register('content')} placeholder="내용" />
+      <Button type="submit">저장</Button>
+    </form>
+  )
+}
+```
+
+---
+
+## 🎨 UI 컴포넌트 활용
+
+### 기본 컴포넌트
+```typescript
+import { Button } from '@/components/ui/button'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+
+function Example() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>카드 제목</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Input placeholder="입력하세요" />
+        <Button>클릭</Button>
+      </CardContent>
+    </Card>
+  )
+}
+```
+
+### 레이아웃 컴포넌트
+```typescript
+function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="border-b">
+        <nav className="container mx-auto px-4 py-2">
+          {/* 네비게이션 */}
+        </nav>
+      </header>
+      <main className="container mx-auto px-4 py-8">
+        {children}
+      </main>
+    </div>
+  )
+}
+```
+
+---
+
+## 📱 반응형 디자인
+
+### Tailwind 반응형 클래스
+```typescript
+<div className="
+  grid 
+  grid-cols-1 
+  md:grid-cols-2 
+  lg:grid-cols-3 
+  gap-4
+">
+  {/* 콘텐츠 */}
+</div>
+```
+
+### 모바일 최적화
+- **터치 타겟**: 최소 44x44px 크기
+- **가독성**: 16px 이상 폰트 크기
+- **네비게이션**: 엄지손가락으로 쉽게 접근
+
+---
+
+## 🚀 배포
+
+### Vercel 배포
+1. GitHub에 코드 푸시
+2. Vercel에서 프로젝트 import
+3. 환경변수 설정
+4. 자동 배포 완료
+
+### 도메인 연결
+1. Vercel 프로젝트 설정에서 도메인 추가
+2. DNS 설정: CNAME을 Vercel로 연결
+3. SSL 자동 적용
+
+### 환경변수 설정 (Vercel)
+```
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY
+```
+
+---
+
+## 🔧 확장 기능 추가
+
+### 소셜 로그인
+1. Supabase에서 OAuth 프로바이더 설정
+2. 리다이렉트 URL 설정
+3. 환경변수 추가
+
+### 파일 업로드
+1. Supabase Storage 버킷 생성
+2. 업로드 정책 설정
+3. 클라이언트에서 파일 업로드
+
+### 실시간 기능
+```typescript
+useEffect(() => {
+  const channel = supabase
+    .channel('posts')
+    .on('postgres_changes', 
+      { event: '*', schema: 'public', table: 'posts' },
+      (payload) => {
+        // 실시간 업데이트 처리
+      }
+    )
+    .subscribe()
+
+  return () => supabase.removeChannel(channel)
+}, [])
+```
+
+---
+
+## 🐛 문제 해결
+
+### 자주 발생하는 문제
+
+**빌드 오류**
+```bash
+pnpm clean    # .next 폴더 삭제
+pnpm build    # 다시 빌드
+```
+
+**TypeScript 오류**
+```bash
+pnpm type-check    # 타입 검사
+```
+
+**Supabase 연결 오류**
+- 환경변수 확인
+- Supabase 프로젝트 상태 확인
+- RLS 정책 검토
+
+**성능 문제**
+- Lighthouse로 성능 측정
+- 이미지 최적화 확인
+- 불필요한 리렌더링 확인
+
+---
+
+## 📊 모니터링
+
+### 성능 측정
+- **Lighthouse**: 성능, 접근성, SEO 점수
+- **Core Web Vitals**: LCP, CLS, FID 측정
+- **Vercel Analytics**: 실제 사용자 메트릭
+
+### 에러 추적
+- 브라우저 개발자 도구에서 콘솔 확인
+- Vercel 함수 로그 확인
+- Supabase 로그 확인
+
+---
+
+## 🎯 프로덕션 체크리스트
+
+### 배포 전 확인사항
+- [ ] 환경변수 모두 설정
+- [ ] 데이터베이스 스키마 적용
+- [ ] RLS 정책 설정
+- [ ] 도메인 연결
+- [ ] SSL 인증서 확인
+
+### SEO 최적화
+- [ ] 메타데이터 설정
+- [ ] sitemap.xml 생성
+- [ ] robots.txt 설정
+- [ ] 구조화된 데이터 추가
+
+### 보안 점검
+- [ ] 환경변수 보안 확인
+- [ ] API 엔드포인트 보호
+- [ ] 사용자 입력 검증
+- [ ] 민감 정보 로그 제거
+
+---
+
+## 💡 팁 & 트릭
+
+### 개발 효율성
+- **코드 스니펫**: 자주 사용하는 패턴 저장
+- **Hot Reload**: 저장 시 자동 새로고침
+- **TypeScript**: 타입 오류 즉시 확인
+- **ESLint**: 코드 스타일 자동 수정
+
+### 디버깅
+- **React DevTools**: 컴포넌트 상태 확인
+- **Network 탭**: API 요청 상태 확인
+- **Console**: 적절한 로그 메시지 활용
+
+### 성능 최적화
+- **이미지**: WebP 포맷 사용
+- **폰트**: 시스템 폰트 우선 고려
+- **CSS**: 불필요한 스타일 제거
+- **JavaScript**: 번들 크기 최소화
+
+---
+
+## 🚀 다음 단계
+
+### 추가 기능 구현
+1. **고급 인증**: 2FA, 소셜 로그인
+2. **파일 관리**: 이미지 업로드, 리사이징
+3. **실시간**: 채팅, 알림 시스템
+4. **분석**: 사용자 행동 추적
+5. **관리자**: 사용자 관리 패널
+
+### 성능 향상
+- **PWA 기능**: 오프라인 지원
+- **이미지 최적화**: 자동 리사이징
+- **캐싱 전략**: 더 스마트한 캐시
+- **코드 분할**: 더 세밀한 분할
+
+### 확장성
+- **다국어**: i18n 지원
+- **테마**: 커스텀 테마 시스템
+- **플러그인**: 확장 가능한 구조
+- **API**: 외부 연동 API
+
+---
+
+## 🎊 완성!
+
+이제 여러분의 **완벽한 Next.js + Supabase 애플리케이션**이 준비되었습니다!
+
+**기억하세요:**
+- 🎯 **사용자 중심으로 개발**
+- 🔒 **보안을 항상 고려**
+- 📱 **모든 디바이스에서 테스트**
+- 🚀 **성능을 지속적으로 모니터링**
+
+**행운을 빕니다!** 멋진 애플리케이션을 만들어보세요! 🎉
