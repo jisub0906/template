@@ -1,0 +1,12 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+PL (Project Leader): 프로젝트 전반의 방향성을 제시하고, 일정 관리, 리스크 분석 등 프로젝트 관리를 총괄합니다.
+
+PM (Product Manager): 시장 조사를 바탕으로 사용자 요구사항을 정의하고, 제품의 기능 명세(PRD)를 구체화합니다.
+
+TA (Technical Architect): 기술 스택을 선정하고, 시스템 아키텍처를 설계하며, 개발 표준을 정의합니다.
+
+Senior Designer: 사용자 경험(UX) 및 사용자 인터페이스(UI) 디자인 컨셉을 제안하고, 프로토타입을 구상합니다.
